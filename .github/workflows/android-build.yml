@@ -9,6 +9,32 @@ jobs:
       - name: 拉取项目代码
         uses: actions/checkout@v4
 
+      - name: 检查gradlew文件是否存在
+        run: |
+          if [ ! -f "./gradlew" ]; then
+            echo "错误：未找到gradlew文件，开始生成..."
+            # 若缺失，创建gradle目录并下载wrapper文件
+            mkdir -p gradle/wrapper
+            # 下载最新的gradle-wrapper.jar（版本7.5，兼容大多数项目）
+            curl -L https://services.gradle.org/distributions/gradle-7.5-bin.zip -o gradle/wrapper/gradle-wrapper.zip
+            # 创建gradle-wrapper.properties配置文件
+            cat > gradle/wrapper/gradle-wrapper.properties << EOF
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+distributionUrl=https\://services.gradle.org/distributions/gradle-7.5-bin.zip
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+EOF
+            # 创建gradlew脚本（Linux/Mac）
+            cat > gradlew << EOF
+#!/bin/sh
+export GRADLE_HOME=\$(cd "\$(dirname "\$0")"/gradle/wrapper; pwd)
+exec "\$GRADLE_HOME"/gradle-wrapper.jar "\$@"
+EOF
+            # 添加执行权限
+            chmod +x gradlew
+          fi
+
       - name: 设置JDK 17
         uses: actions/setup-java@v4
         with:
@@ -20,7 +46,6 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: 12.0
-          # 修复packages列表格式：每个包单独一行，且正确缩进
           packages: 
             platform-tools
             build-tools;33.0.2
@@ -29,14 +54,9 @@ jobs:
 
       - name: 接受Android SDK许可证
         run: |
-          # 显式指定sdkmanager路径，确保与安装路径一致
           yes | $ANDROID_HOME/cmdline-tools/12.0/bin/sdkmanager --licenses > /dev/null 2>&1
 
-      - name: 验证已安装的SDK组件
-        run: |
-          $ANDROID_HOME/cmdline-tools/12.0/bin/sdkmanager --list_installed
-
-      - name: 授权Gradle脚本
+      - name: 授权Gradle脚本（确保存在）
         run: chmod +x ./gradlew
 
       - name: 构建debug APK
