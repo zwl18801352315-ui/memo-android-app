@@ -17,27 +17,26 @@ jobs:
           cache: gradle
 
       - name: 设置Android SDK
-        # 使用最新版本的setup-android插件(v4)，修复兼容性问题
-        uses: android-actions/setup-android@v4
+        # 使用已发布的稳定版本v3
+        uses: android-actions/setup-android@v3
         with:
-          # 安装最新的命令行工具
-          cmdline-tools-version: latest
-          # 明确指定需要的SDK版本和构建工具（确保版本存在）
+          # 明确指定cmdline-tools版本（v3兼容的稳定版本）
+          cmdline-tools-version: 9.0
           packages: |
             platform-tools
-            build-tools;34.0.0  # 使用较新且稳定的构建工具版本
-            platforms;android-34  # 匹配最新的SDK版本
-            cmdline-tools;latest  # 确保命令行工具是最新的
+            build-tools;33.0.2  # 稳定版本，兼容性好
+            platforms;android-33  # 与构建工具版本匹配
+            cmdline-tools;9.0  # 明确版本号，避免latest带来的问题
 
       - name: 接受Android SDK许可证
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
+          yes | $ANDROID_HOME/cmdline-tools/9.0/bin/sdkmanager --licenses > /dev/null 2>&1
 
       - name: 授权Gradle脚本
         run: chmod +x ./gradlew
 
       - name: 构建debug APK
-        run: ./gradlew assembleDebug --stacktrace  # 增加--stacktrace便于调试构建错误
+        run: ./gradlew assembleDebug --stacktrace
 
       - name: 上传APK文件
         uses: actions/upload-artifact@v4
