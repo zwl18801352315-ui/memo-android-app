@@ -17,20 +17,20 @@ jobs:
           cache: gradle
 
       - name: 设置Android SDK
-        # 使用已发布的稳定版本v3
         uses: android-actions/setup-android@v3
         with:
-          # 明确指定cmdline-tools版本（v3兼容的稳定版本）
-          cmdline-tools-version: 9.0
+          # 使用当前存在的稳定版本（11.0是经过验证的可用版本）
+          cmdline-tools-version: 11.0
           packages: |
             platform-tools
-            build-tools;33.0.2  # 稳定版本，兼容性好
-            platforms;android-33  # 与构建工具版本匹配
-            cmdline-tools;9.0  # 明确版本号，避免latest带来的问题
+            build-tools;33.0.2
+            platforms;android-33
+            cmdline-tools;11.0  # 与上面的版本号保持一致
 
       - name: 接受Android SDK许可证
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/9.0/bin/sdkmanager --licenses > /dev/null 2>&1
+          # 路径需与指定的cmdline-tools版本匹配
+          yes | $ANDROID_HOME/cmdline-tools/11.0/bin/sdkmanager --licenses > /dev/null 2>&1
 
       - name: 授权Gradle脚本
         run: chmod +x ./gradlew
