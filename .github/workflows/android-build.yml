@@ -32,7 +32,7 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: 上传APK文件
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # 已更新为最新版本v4
         with:
           name: memo-app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
