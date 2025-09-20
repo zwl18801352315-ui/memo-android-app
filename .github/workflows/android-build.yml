@@ -19,18 +19,22 @@ jobs:
       - name: 设置Android SDK
         uses: android-actions/setup-android@v3
         with:
-          # 使用系统预安装的12.0版本（错误信息中已发现该版本）
           cmdline-tools-version: 12.0
-          packages: |
+          # 修复packages列表格式：每个包单独一行，且正确缩进
+          packages: 
             platform-tools
             build-tools;33.0.2
             platforms;android-33
-            cmdline-tools;12.0  # 匹配预安装版本
+            cmdline-tools;12.0
 
       - name: 接受Android SDK许可证
         run: |
-          # 直接使用预安装的12.0版本路径
+          # 显式指定sdkmanager路径，确保与安装路径一致
           yes | $ANDROID_HOME/cmdline-tools/12.0/bin/sdkmanager --licenses > /dev/null 2>&1
+
+      - name: 验证已安装的SDK组件
+        run: |
+          $ANDROID_HOME/cmdline-tools/12.0/bin/sdkmanager --list_installed
 
       - name: 授权Gradle脚本
         run: chmod +x ./gradlew
