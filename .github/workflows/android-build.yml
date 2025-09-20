@@ -4,34 +4,23 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: 拉取项目代码
         uses: actions/checkout@v4
 
-      - name: 检查gradlew文件是否存在
+      - name: 确保gradlew存在
         run: |
-          if [ ! -f "./gradlew" ]; then
-            echo "错误：未找到gradlew文件，开始生成..."
-            # 若缺失，创建gradle目录并下载wrapper文件
+          if [ ! -f "gradlew" ]; then
             mkdir -p gradle/wrapper
-            # 下载最新的gradle-wrapper.jar（版本7.5，兼容大多数项目）
-            curl -L https://services.gradle.org/distributions/gradle-7.5-bin.zip -o gradle/wrapper/gradle-wrapper.zip
-            # 创建gradle-wrapper.properties配置文件
-            cat > gradle/wrapper/gradle-wrapper.properties << EOF
-distributionBase=GRADLE_USER_HOME
-distributionPath=wrapper/dists
-distributionUrl=https\://services.gradle.org/distributions/gradle-7.5-bin.zip
-zipStoreBase=GRADLE_USER_HOME
-zipStorePath=wrapper/dists
-EOF
-            # 创建gradlew脚本（Linux/Mac）
-            cat > gradlew << EOF
-#!/bin/sh
-export GRADLE_HOME=\$(cd "\$(dirname "\$0")"/gradle/wrapper; pwd)
-exec "\$GRADLE_HOME"/gradle-wrapper.jar "\$@"
-EOF
-            # 添加执行权限
+            curl -sSL https://services.gradle.org/distributions/gradle-7.5-bin.zip -o gradle/wrapper/gradle-wrapper.zip
+            echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
+            echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+            echo "distributionUrl=https://services.gradle.org/distributions/gradle-7.5-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
+            echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
+            echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
+            echo '#!/bin/sh' > gradlew
+            echo 'export GRADLE_HOME=$(cd "$(dirname "$0")"/gradle/wrapper; pwd)' >> gradlew
+            echo 'exec "$GRADLE_HOME"/gradle-wrapper.jar "$@"' >> gradlew
             chmod +x gradlew
           fi
 
@@ -42,27 +31,19 @@ EOF
           distribution: 'temurin'
           cache: gradle
 
-      - name: 设置Android SDK
+      - name: 安装Android SDK组件
         uses: android-actions/setup-android@v3
         with:
           cmdline-tools-version: 12.0
-          packages: 
-            platform-tools
-            build-tools;33.0.2
-            platforms;android-33
-            cmdline-tools;12.0
+          packages: platform-tools,build-tools;33.0.2,platforms;android-33,cmdline-tools;12.0
 
-      - name: 接受Android SDK许可证
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/12.0/bin/sdkmanager --licenses > /dev/null 2>&1
+      - name: 接受SDK许可证
+        run: yes | $ANDROID_HOME/cmdline-tools/12.0/bin/sdkmanager --licenses > /dev/null 2>&1
 
-      - name: 授权Gradle脚本（确保存在）
-        run: chmod +x ./gradlew
-
-      - name: 构建debug APK
+      - name: 构建APK
         run: ./gradlew assembleDebug --stacktrace
 
-      - name: 上传APK文件
+      - name: 上传APK
         uses: actions/upload-artifact@v4
         with:
           name: memo-app-debug
