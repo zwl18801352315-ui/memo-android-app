@@ -8,22 +8,6 @@ jobs:
       - name: 拉取项目代码
         uses: actions/checkout@v4
 
-      - name: 确保gradlew存在
-        run: |
-          if [ ! -f "gradlew" ]; then
-            mkdir -p gradle/wrapper
-            curl -sSL https://services.gradle.org/distributions/gradle-7.5-bin.zip -o gradle/wrapper/gradle-wrapper.zip
-            echo "distributionBase=GRADLE_USER_HOME" > gradle/wrapper/gradle-wrapper.properties
-            echo "distributionPath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-            echo "distributionUrl=https://services.gradle.org/distributions/gradle-7.5-bin.zip" >> gradle/wrapper/gradle-wrapper.properties
-            echo "zipStoreBase=GRADLE_USER_HOME" >> gradle/wrapper/gradle-wrapper.properties
-            echo "zipStorePath=wrapper/dists" >> gradle/wrapper/gradle-wrapper.properties
-            echo '#!/bin/sh' > gradlew
-            echo 'export GRADLE_HOME=$(cd "$(dirname "$0")"/gradle/wrapper; pwd)' >> gradlew
-            echo 'exec "$GRADLE_HOME"/gradle-wrapper.jar "$@"' >> gradlew
-            chmod +x gradlew
-          fi
-
       - name: 设置JDK 17
         uses: actions/setup-java@v4
         with:
@@ -31,18 +15,11 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: 安装Android SDK组件
+      - name: 安装Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 12.0
-          packages:
-            - platform-tools
-            - build-tools;33.0.2
-            - platforms;android-33
-            - cmdline-tools;12.0
 
       - name: 接受SDK许可证
-        run: yes | $ANDROID_HOME/cmdline-tools/12.0/bin/sdkmanager --licenses > /dev/null 2>&1
+        run: yes | sdkmanager --licenses
 
       - name: 构建APK
         run: ./gradlew assembleDebug --stacktrace
